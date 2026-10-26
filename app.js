@@ -26,8 +26,8 @@
  * ──────────────────────────────────────────────────────────────────────────
  */
 
-const SUPABASE_URL = 'https://mkburxscvcajnjdyektm.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_1L2UoFd-gqSJ4v1U12iqmg_gaeA8Lkg';
+const SUPABASE_URL = 'https://raiadiycyqeqqaamibqe.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_RYPeFrUwfkPZ66ogV1HE6g_pt0U9Dlc';
 
 let sb = null;
 let configError = null;
