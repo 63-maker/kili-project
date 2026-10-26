@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="obsidian">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>பணக் காவலன்</title>
+    <!-- SVG Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client v2 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+    <!-- Ambient Mesh Glows -->
+    <div class="ambient-glow glow-top-left"></div>
+    <div class="ambient-glow glow-bottom-right"></div>
+    <div class="ambient-glow glow-center"></div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-orb">
+                    <span>💰</span>
+                </div>
+                <h2>பணக் காவலன்</h2>
+            </div>
+
+            <div id="loginError" class="error-message"></div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <div class="input-icon-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="loginUsername" required autocomplete="username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <div class="input-icon-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="loginPassword" required autocomplete="current-password">
+                    </div>
+                </div>
+                <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-glow">
+                    <span>Log in</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="mainApp" class="hidden">
+        <!-- Desktop Floating Navigation Bar -->
+        <nav class="desktop-nav">
+            <div class="desktop-nav-container">
+                <div class="navbar-brand">
+                    <div class="brand-logo-icon">💰</div>
+                    <div class="brand-info">
+                        <span class="brand-text">பணக் காவலன்</span>
+                    </div>
+                </div>
+
+                <div class="desktop-nav-links">
+                    <button class="navbar-link active" onclick="showSection('expenses')">
+                        <span class="icon">💳</span>
+                        <span>Expenses</span>
+                    </button>
+                    <button class="navbar-link" onclick="showSection('balances')">
+                        <span class="icon">⚖️</span>
+                        <span>Balances</span>
+                    </button>
+                    <button class="navbar-link" onclick="showSection('summary')">
+                        <span class="icon">📊</span>
+                        <span>Summary</span>
+                    </button>
+                    <button class="navbar-link" onclick="showSection('notes')">
+                        <span class="icon">📝</span>
+                        <span>Notes</span>
+                    </button>
+                    <button class="navbar-link" id="usersLinkDesktop" onclick="showSection('users')">
+                        <span class="icon">👥</span>
+                        <span>Users</span>
+                    </button>
+                </div>
+
+                <div class="desktop-nav-actions">
+                    <!-- Theme Selector Dropdown -->
+                    <div class="theme-dropdown-wrap">
+                        <button class="btn-icon-nav" id="themeBtn" onclick="toggleThemeDropdown()" title="Change theme">
+                            🎨 <span class="theme-label" id="currentThemeLabel">Obsidian</span>
+                        </button>
+                        <div id="themeMenu" class="theme-menu hidden">
+                            <button onclick="setTheme('obsidian')" class="theme-option active-theme" data-theme-id="obsidian">
+                                <span class="theme-dot" style="background: linear-gradient(135deg, #0f172a, #f59e0b);"></span>
+                                <span>Obsidian Gold</span>
+                            </button>
+                            <button onclick="setTheme('emerald')" class="theme-option" data-theme-id="emerald">
+                                <span class="theme-dot" style="background: linear-gradient(135deg, #064e3b, #10b981);"></span>
+                                <span>Emerald Royal</span>
+                            </button>
+                            <button onclick="setTheme('cyberpunk')" class="theme-option" data-theme-id="cyberpunk">
+                                <span class="theme-dot" style="background: linear-gradient(135deg, #1e1b4b, #818cf8);"></span>
+                                <span>Nebula Violet</span>
+                            </button>
+                            <button onclick="setTheme('nordic')" class="theme-option" data-theme-id="nordic">
+                                <span class="theme-dot" style="background: linear-gradient(135deg, #f8fafc, #0284c7);"></span>
+                                <span>Nordic Frost</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="btn-logout-nav" onclick="logout()" title="Log out">
+                        <span>Log out</span> 🚪
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <header class="app-header">
+                <div class="header-content">
+                    <div class="header-title-row">
+                        <h1>💰 பணக் காவலன்</h1>
+                    </div>
+                </div>
+
+                <div class="header-right-meta">
+                    <div class="user-profile-chip">
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <div class="user-details">
+                            <span class="user-name" id="userDisplayName">admin</span>
+                            <span class="user-role-label" id="userRoleBadge">ADMIN</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ================= EXPENSES SECTION ================= -->
+            <div id="expenses-section" class="content-section active">
+                <div class="section-grid">
+                    <!-- Add Expense Card -->
+                    <div class="card card-glow">
+                        <div class="card-header">
+                            <div class="card-title-wrap">
+                                <span class="card-icon">➕</span>
+                                <h2>Add expense</h2>
+                            </div>
+                        </div>
+
+                        <div id="expenseSuccess" class="success-message"></div>
+                        <div id="expenseError" class="error-message"></div>
+
+                        <form id="expenseForm" onsubmit="handleAddExpense(event)">
+                            <div class="form-group">
+                                <label for="expenseDescription">Description</label>
+                                <input type="text" id="expenseDescription" required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group flex-1">
+                                    <label for="expenseAmount">Amount (₹)</label>
+                                    <div class="input-currency-wrap">
+                                        <span class="currency-symbol">₹</span>
+                                        <input type="number" id="expenseAmount" step="0.01" min="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="expenseCategory">Category</label>
+                                    <select id="expenseCategory">
+                                        <option value="Food &amp; Dining">🍔 Food &amp; Dining</option>
+                                        <option value="Groceries">🛒 Groceries</option>
+                                        <option value="Rent &amp; Utilities">🏠 Rent &amp; Utilities</option>
+                                        <option value="Travel &amp; Fuel">🚗 Travel &amp; Fuel</option>
+                                        <option value="Entertainment">🎬 Entertainment</option>
+                                        <option value="Shopping">🛍️ Shopping</option>
+                                        <option value="Settlement">🤝 Settlement</option>
+                                        <option value="Other">📦 Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="paidBy">Paid by</label>
+                                <select id="paidBy" required></select>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="split-header">
+                                    <label>Split between</label>
+                                    <div class="split-actions">
+                                        <button type="button" class="btn-text-action" onclick="toggleSelectAllParticipants(true)">Select all</button>
+                                        <span class="divider-dot">•</span>
+                                        <button type="button" class="btn-text-action" onclick="toggleSelectAllParticipants(false)">Clear</button>
+                                    </div>
+                                </div>
+                                <div id="participantsList" class="participants-list"></div>
+                            </div>
+
+                            <button type="submit" id="addExpenseBtn" class="btn btn-primary btn-glow">
+                                <span>Add expense</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Recent Expenses Card -->
+                    <div class="card">
+                        <div class="card-header-flex">
+                            <div class="card-title-wrap">
+                                <span class="card-icon">📜</span>
+                                <h2>Recent expenses</h2>
+                            </div>
+                            <button class="btn-sm btn-outline-glow" onclick="exportExpensesCSV()">
+                                <span>📥 Export CSV</span>
+                            </button>
+                        </div>
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="expenseSearch" placeholder="Search expenses" onkeyup="filterExpenses()">
+                        </div>
+                        <div id="expensesList" class="loading">
+                            <div class="spinner"></div>
+                            <span>Loading expenses</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= BALANCES SECTION ================= -->
+            <div id="balances-section" class="content-section">
+                <div class="section-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title-wrap">
+                                <span class="card-icon">⚖️</span>
+                                <h2>Current balances</h2>
+                            </div>
+                        </div>
+                        <div id="balancesList" class="loading">
+                            <div class="spinner"></div>
+                            <span>Calculating balances</span>
+                        </div>
+                    </div>
+
+                    <div class="card card-glow-emerald">
+                        <div class="card-header">
+                            <div class="card-title-wrap">
+                                <span class="card-icon">🤝</span>
+                                <h2>Who owes who</h2>
+                            </div>
+                        </div>
+                        <div id="settlementsList" class="loading">
+                            <div class="spinner"></div>
+                            <span>Calculating settlements</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= SUMMARY & ANALYTICS SECTION ================= -->
+            <div id="summary-section" class="content-section">
+                <div class="card">
+                    <div class="card-header-flex">
+                        <div class="card-title-wrap">
+                            <span class="card-icon">📊</span>
+                            <h2>Summary</h2>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap">
+                            <button class="btn-sm btn-outline-glow" onclick="displaySummary()">
+                                <span>🔄 Refresh</span>
+                            </button>
+                            <button class="btn-sm btn-outline-glow" onclick="exportFullBackup()">
+                                <span>📦 Export JSON</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="summaryDetails" class="loading">
+                        <div class="spinner"></div>
+                        <span>Loading summary</span>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-box">
+                            <div class="chart-box-header">
+                                <h3>Spending by member</h3>
+                            </div>
+                            <div class="canvas-holder">
+                                <canvas id="userSpendingChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-box">
+                            <div class="chart-box-header">
+                                <h3>Expenses by category</h3>
+                            </div>
+                            <div class="canvas-holder">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= NOTES SECTION ================= -->
+            <div id="notes-section" class="content-section">
+                <div class="section-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title-wrap">
+                                <span class="card-icon">📝</span>
+                                <h2>Add note</h2>
+                            </div>
+                        </div>
+
+                        <div id="noteSuccess" class="success-message"></div>
+                        <div id="noteError" class="error-message"></div>
+
+                        <form id="noteForm" onsubmit="handleAddNote(event)">
+                            <div class="form-group">
+                                <label for="noteTitle">Title</label>
+                                <input type="text" id="noteTitle" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="noteContent">Note</label>
+                                <textarea id="noteContent" required></textarea>
+                            </div>
+                            <button type="submit" id="addNoteBtn" class="btn btn-primary btn-glow">
+                                <span>Post note</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header-flex">
+                            <div class="card-title-wrap">
+                                <span class="card-icon">📌</span>
+                                <h2>Notice board</h2>
+                            </div>
+                        </div>
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="noteSearch" placeholder="Search notes" onkeyup="filterNotes()">
+                        </div>
+                        <div id="notesList" class="loading">
+                            <div class="spinner"></div>
+                            <span>Loading notes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= USERS SECTION (ADMIN ONLY) ================= -->
+            <div id="users-section" class="content-section">
+                <div class="section-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title-wrap">
+                                <span class="card-icon">👤</span>
+                                <h2>Add user</h2>
+                            </div>
+                        </div>
+
+                        <div id="userSuccess" class="success-message"></div>
+                        <div id="userError" class="error-message"></div>
+
+                        <form id="userForm" onsubmit="handleAddUser(event)">
+                            <div class="form-group">
+                                <label for="newUsername">Username</label>
+                                <input type="text" id="newUsername" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">Password</label>
+                                <input type="password" id="newPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserRole">Role</label>
+                                <select id="newUserRole">
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <button type="submit" id="addUserBtn" class="btn btn-primary btn-glow">
+                                <span>Add user</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title-wrap">
+                                <span class="card-icon">👥</span>
+                                <h2>All users</h2>
+                            </div>
+                        </div>
+                        <div id="usersList" class="loading">
+                            <div class="spinner"></div>
+                            <span>Loading users</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Bottom Floating Navigation Bar -->
+        <nav class="navbar">
+            <div class="navbar-container">
+                <button class="navbar-link active" onclick="showSection('expenses')">
+                    <span class="icon">💳</span>
+                    <span>Expenses</span>
+                </button>
+                <button class="navbar-link" onclick="showSection('balances')">
+                    <span class="icon">⚖️</span>
+                    <span>Balances</span>
+                </button>
+                <button class="navbar-link" onclick="showSection('summary')">
+                    <span class="icon">📊</span>
+                    <span>Summary</span>
+                </button>
+                <button class="navbar-link" onclick="showSection('notes')">
+                    <span class="icon">📝</span>
+                    <span>Notes</span>
+                </button>
+                <button class="navbar-link" id="usersLinkMobile" onclick="showSection('users')">
+                    <span class="icon">👥</span>
+                    <span>Users</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <script src="./app.js"></script>
+</body>
+</html>
